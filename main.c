@@ -3,17 +3,38 @@
 #include <gb/font.h>
 #include <stdio.h>
 #include "BirdImg.c"
-#include "bg1.c"
+#include "bg1img.c"
 #include "bg1map.c"
 #include "windowmap.c"
 #include "menu.c"
 #include "menuimg.c"
 #include "GameChar.c"
 
+UINT8 ParalaxBGOffset1, ParalaxBGOffset2, ParalaxBGOffset3;
+
 struct GameChar bird;
 UBYTE spritesize = 8;
 UINT8 spriteCount = 0;
 UINT8 frameID = 0;
+
+//moves sections of the background at given point on screen to create a paralax effect 
+void ParalaxScroll(){
+    switch (LYC_REG)
+    {
+        case 0x00:
+            move_bkg(ParalaxBGOffset1, 0);
+            LYC_REG = 0x3D;
+            break;
+        case 0x3D:
+            move_bkg(ParalaxBGOffset2, 0);
+            LYC_REG = 0x74;
+            break;
+        case 0x74:
+            move_bkg(ParalaxBGOffset3, 0);
+            LYC_REG = 0x00;
+            break;            
+    }
+}
 
 //moves and animates characters
 void MoveGameCharacter(struct GameChar* character, UINT8 x, UINT8 y){
@@ -172,14 +193,15 @@ void FadeIn()
 //start up function
 void main()
 {
-    
-
     //set up font
     font_t min_font;
     font_init();
     min_font = font_load(font_min);
     font_set(min_font);
 
+    ParalaxBGOffset1 = 0;
+    ParalaxBGOffset2 = 0; 
+    ParalaxBGOffset3 = 0;
 
     //set up menu background
     set_bkg_data(0, 128, menuimg);
@@ -190,8 +212,17 @@ void main()
     FadeOut();
     
     //set up background
-    set_bkg_data(128, 6, bg1);
+    set_bkg_data(128, 32, bg1img);
     set_bkg_tiles(0, 0, 40, 18, bg1map);
+
+    STAT_REG = 0x45; // enable LYC=LY interrupt so that we can set a specific line it will fire at
+    LYC_REG = 0x00;
+
+    disable_interrupts();
+    add_LCD(ParalaxScroll);
+    enable_interrupts();
+
+    set_interrupts(VBL_IFLAG | LCD_IFLAG);
 
     //set up sprite
     set_sprite_data(0, 15, BirdImg);
@@ -207,7 +238,7 @@ void main()
     //enables features
     SHOW_SPRITES;
     SHOW_BKG;
-    SHOW_WIN;
+    //SHOW_WIN;
     DISPLAY_ON;
 
     NR52_REG = 0x80; //turns sound on
@@ -218,7 +249,10 @@ void main()
     //game loop
     while (1)
     {
-        
+        ParalaxBGOffset1 += 1;
+        ParalaxBGOffset2 += 2;
+        ParalaxBGOffset3 += 10;
+
         //uses arrow keys to move player
         switch (joypad())
         {
@@ -251,7 +285,7 @@ void main()
         frameID++;
 
         //scroll background and sprites
-        scroll_bkg(1, 0);
+        //scroll_bkg(1, 0);
 
         //set frame rate
         GBDelay(5);
