@@ -2,15 +2,177 @@
 #include <gb/gb.h>
 #include <gb/font.h>
 #include <stdio.h>
-#include "bird.c"
+#include "BirdImg.c"
 #include "bg1.c"
 #include "bg1map.c"
 #include "windowmap.c"
+#include "menu.c"
+#include "menuimg.c"
+#include "GameChar.c"
+
+struct GameChar bird;
+UBYTE spritesize = 8;
+UINT8 spriteCount = 0;
+UINT8 frameID = 0;
+
+//moves and animates characters
+void MoveGameCharacter(struct GameChar* character, UINT8 x, UINT8 y){
+    if (frameID == 0)
+    {
+        move_sprite(character->spriteID[4], x, y);
+        move_sprite(character->spriteID[2], x + spritesize, y);
+        move_sprite(character->spriteID[1], x, y + spritesize);
+        move_sprite(character->spriteID[3], x + spritesize, y + spritesize);
+        //move_sprite(character->spriteID[0], 0, 0);
+        move_sprite(character->spriteID[6], 0, 0);
+        move_sprite(character->spriteID[5], 0, 0);
+        move_sprite(character->spriteID[7], 0, 0);
+        move_sprite(character->spriteID[8], 0, 0);
+        move_sprite(character->spriteID[10], 0, 0);
+        move_sprite(character->spriteID[9], 0, 0);
+        move_sprite(character->spriteID[11], 0, 0);
+        move_sprite(character->spriteID[12], 0, 0);
+        move_sprite(character->spriteID[14], 0, 0);
+        move_sprite(character->spriteID[13], 0, 0);
+        move_sprite(character->spriteID[15], 0, 0);
+    }
+    else if (frameID == 1)
+    {
+        //move_sprite(character->spriteID[0], 0, 0);
+        move_sprite(character->spriteID[2], 0, 0);
+        move_sprite(character->spriteID[1], 0, 0);
+        move_sprite(character->spriteID[3], 0, 0);
+        move_sprite(character->spriteID[4], x, y);
+        move_sprite(character->spriteID[6], x + spritesize, y);
+        move_sprite(character->spriteID[5], x, y + spritesize);
+        move_sprite(character->spriteID[7], x + spritesize, y + spritesize);
+        move_sprite(character->spriteID[8], 0, 0);
+        move_sprite(character->spriteID[10], 0, 0);
+        move_sprite(character->spriteID[9], 0, 0);
+        move_sprite(character->spriteID[11], 0, 0);
+        move_sprite(character->spriteID[12], 0, 0);
+        move_sprite(character->spriteID[14], 0, 0);
+        move_sprite(character->spriteID[13], 0, 0);
+        move_sprite(character->spriteID[15], 0, 0);
+    }
+    else if (frameID == 2)
+    {
+        //move_sprite(character->spriteID[0], 0, 0);
+        move_sprite(character->spriteID[2], 0, 0);
+        move_sprite(character->spriteID[1], 0, 0);
+        move_sprite(character->spriteID[3], 0, 0);
+        move_sprite(character->spriteID[4], 0, 0);
+        move_sprite(character->spriteID[6], 0, 0);
+        move_sprite(character->spriteID[5], 0, 0);
+        move_sprite(character->spriteID[7], 0, 0);
+        move_sprite(character->spriteID[8], x, y);
+        move_sprite(character->spriteID[10], x + spritesize, y);
+        move_sprite(character->spriteID[9], x, y + spritesize);
+        move_sprite(character->spriteID[11], x + spritesize, y + spritesize);
+        move_sprite(character->spriteID[12], 0, 0);
+        move_sprite(character->spriteID[14], 0, 0);
+        move_sprite(character->spriteID[13], 0, 0);
+        move_sprite(character->spriteID[15], 0, 0);
+    }
+    else if (frameID == 3)
+    {
+        //move_sprite(character->spriteID[0], 0, 0);
+        move_sprite(character->spriteID[2], 0, 0);
+        move_sprite(character->spriteID[1], 0, 0);
+        move_sprite(character->spriteID[3], 0, 0);
+        move_sprite(character->spriteID[4], 0, 0);
+        move_sprite(character->spriteID[6], 0, 0);
+        move_sprite(character->spriteID[5], 0, 0);
+        move_sprite(character->spriteID[7], 0, 0);
+        move_sprite(character->spriteID[8], 0, 0);
+        move_sprite(character->spriteID[10], 0, 0);
+        move_sprite(character->spriteID[9], 0, 0);
+        move_sprite(character->spriteID[11], 0, 0);
+        move_sprite(character->spriteID[12], x, y);
+        move_sprite(character->spriteID[14], x + spritesize, y);
+        move_sprite(character->spriteID[13], x, y + spritesize);
+        move_sprite(character->spriteID[15], 0,0);
+    }
+}
+
+//sets up bird with sprites, bounding box and position
+void SetUpBird(){
+    bird.x = 80;
+    bird.y = 130;
+    bird.width = 16;
+    bird.height = 16;
+
+    for (spriteCount = 1; spriteCount < 15; spriteCount++)
+    {
+        set_sprite_tile(spriteCount, spriteCount);
+        bird.spriteID[spriteCount] = spriteCount;
+    }
+
+    MoveGameCharacter(&bird, bird.x, bird.y);
+}
+
+//adds delay
+void GBDelay(UINT8 delayCount)
+{
+    UINT8 currentDelayCount;
+
+    for(currentDelayCount = 0; currentDelayCount < delayCount; currentDelayCount++)
+    {
+        wait_vbl_done();
+    }     
+}
+
+//changes screen colour to fade out
+void FadeOut()
+{
+    UINT8 i;
+	for(i = 0; i < 4; i++)
+    {
+		switch(i)
+        {
+			case 0:
+				BGP_REG = 0xE4;
+				break;
+			case 1:
+				BGP_REG = 0xF9;
+				break;
+			case 2:
+				BGP_REG = 0xFE;
+				break;
+			case 3:
+				BGP_REG = 0xFF;	
+				break;						
+		}
+		GBDelay(5);
+	}
+}
+
+//changes screen colour to fade in
+void FadeIn()
+{
+    UINT8 i;
+	for (i = 0; i < 3; i++) 
+    {
+		switch(i)
+        {
+			case 0:
+				BGP_REG = 0xFE;
+				break;
+			case 1:
+				BGP_REG = 0xF9;
+				break;
+			case 2:
+				BGP_REG = 0xE4;
+				break;					
+		}
+		GBDelay(5);
+	}
+}
 
 //start up function
 void main()
 {
-    UINT8 frameID = 0;
+    
 
     //set up font
     font_t min_font;
@@ -18,18 +180,29 @@ void main()
     min_font = font_load(font_min);
     font_set(min_font);
 
+
+    //set up menu background
+    set_bkg_data(0, 128, menuimg);
+    set_bkg_tiles(0, 0, 20, 18, menu);
+
+    //wait til player starts game then fade out
+    waitpad(J_START);
+    FadeOut();
+    
     //set up background
-    set_bkg_data(37, 6, bg1);
+    set_bkg_data(128, 6, bg1);
     set_bkg_tiles(0, 0, 40, 18, bg1map);
 
     //set up sprite
-    set_sprite_data(0, 3, bird);
-    set_sprite_tile(0, 0);
-    move_sprite(0, 88, 78);
+    set_sprite_data(0, 15, BirdImg);
+    SetUpBird();
+
+    //fade back in once everything is loaded
+    FadeIn();
 
     //set up text window
-    set_win_tiles(0, 0, 8, 1, windowmap);
-    move_win(7, 120);
+    // set_win_tiles(0, 0, 8, 1, windowmap);
+    // move_win(7, 120);
 
     //enables features
     SHOW_SPRITES;
@@ -41,14 +214,7 @@ void main()
     NR50_REG = 0x77; //gives dou sound
     NR51_REG = 0xFF; //enables all sound channels
 
-    //jump sound
-    // NR10_REG = 0x16;
-    // NR11_REG = 0x40;
-    // NR12_REG = 0x73;
-    // NR13_REG = 0x00;
-    // NR14_REG = 0xC3;
 
-    
     //game loop
     while (1)
     {
@@ -57,220 +223,25 @@ void main()
         switch (joypad())
         {
         case J_LEFT: 
-            scroll_sprite(0, -2, 0);
+            bird.x -= 2;
             break;
         case J_RIGHT:
-            scroll_sprite(0, 2, 0);
+            bird.x += 2;
             break;
         case J_UP:
-            scroll_sprite(0, 0, -2);
+            bird.y -= 2;
             break;
         case J_DOWN:
-            scroll_sprite(0, 0, 2);
+            bird.y += 2;
             break;
         default:
             break;
         }
+    
 
-        //plays music
-        if (frameID == 0)
-        {
-            //frameID = 0;
-            NR21_REG = 0x00;
-            NR22_REG = 0x84;
-            NR23_REG = 0x47;
-            NR24_REG = 0x86;
-        }
-        else if(frameID == 4)
-        {
-            NR21_REG = 0x00;
-            NR22_REG = 0x84;
-            NR23_REG = 0x47;
-            NR24_REG = 0x86;
-        }
-        else if(frameID == 8)
-        {
-            NR21_REG = 0x00;
-            NR22_REG = 0x84;
-            NR23_REG = 0xB7;
-            NR24_REG = 0x86;
-        }
-        else if(frameID == 12)
-        {
-            NR21_REG = 0x00;
-            NR22_REG = 0x84;
-            NR23_REG = 0xB7;
-            NR24_REG = 0x86;
-        }
-        else if(frameID == 16)
-        {
-            NR21_REG = 0x00;
-            NR22_REG = 0x84;
-            NR23_REG = 0xD7;
-            NR24_REG = 0x86;
-        }
-        else if(frameID == 20)
-        {
-            NR21_REG = 0x00;
-            NR22_REG = 0x84;
-            NR23_REG = 0xD7;
-            NR24_REG = 0x86;
-        }
-        else if(frameID == 24)
-        {
-            NR21_REG = 0x00;
-            NR22_REG = 0x84;
-            NR23_REG = 0xB7;
-            NR24_REG = 0x86;
-        }
-        else if(frameID == 32)
-        {
-            NR21_REG = 0x00;
-            NR22_REG = 0x84;
-            NR23_REG = 0x97;
-            NR24_REG = 0x86;
-        }
-        else if(frameID == 36)
-        {
-            NR21_REG = 0x00;
-            NR22_REG = 0x84;
-            NR23_REG = 0x97;
-            NR24_REG = 0x86;
-        }
-        else if(frameID == 40)
-        {
-            NR21_REG = 0x00;
-            NR22_REG = 0x84;
-            NR23_REG = 0x87;
-            NR24_REG = 0x86;
-        }
-        else if(frameID == 44)
-        {
-            NR21_REG = 0x00;
-            NR22_REG = 0x84;
-            NR23_REG = 0x87;
-            NR24_REG = 0x86;
-        }
-        else if(frameID == 48)
-        {
-            NR21_REG = 0x00;
-            NR22_REG = 0x84;
-            NR23_REG = 0x67;
-            NR24_REG = 0x86;
-        }
-        else if(frameID == 52)
-        {
-            NR21_REG = 0x00;
-            NR22_REG = 0x84;
-            NR23_REG = 0x67;
-            NR24_REG = 0x86;
-        }
-        else if(frameID == 56)
-        {
-            NR21_REG = 0x00;
-            NR22_REG = 0x84;
-            NR23_REG = 0x47;
-            NR24_REG = 0x86;
-        }
-        else if(frameID == 64)
-        {
-            NR21_REG = 0x00;
-            NR22_REG = 0x84;
-            NR23_REG = 0xB7;
-            NR24_REG = 0x86;
-        }
-        else if(frameID == 68)
-        {
-            NR21_REG = 0x00;
-            NR22_REG = 0x84;
-            NR23_REG = 0xB7;
-            NR24_REG = 0x86;
-        }
-        else if(frameID == 72)
-        {
-            NR21_REG = 0x00;
-            NR22_REG = 0x84;
-            NR23_REG = 0x97;
-            NR24_REG = 0x86;
-        }
-        else if(frameID == 76)
-        {
-            NR21_REG = 0x00;
-            NR22_REG = 0x84;
-            NR23_REG = 0x97;
-            NR24_REG = 0x86;
-        }
-        else if(frameID == 80)
-        {
-            NR21_REG = 0x00;
-            NR22_REG = 0x84;
-            NR23_REG = 0x87;
-            NR24_REG = 0x86;
-        }
-        else if(frameID == 84)
-        {
-            NR21_REG = 0x00;
-            NR22_REG = 0x84;
-            NR23_REG = 0x87;
-            NR24_REG = 0x86;
-        }
-        else if(frameID == 88)
-        {
-            NR21_REG = 0x00;
-            NR22_REG = 0x84;
-            NR23_REG = 0x67;
-            NR24_REG = 0x86;
-        }
-        else if(frameID == 96)
-        {
-            NR21_REG = 0x00;
-            NR22_REG = 0x84;
-            NR23_REG = 0xB7;
-            NR24_REG = 0x86;
-        }
-        else if(frameID == 100)
-        {
-            NR21_REG = 0x00;
-            NR22_REG = 0x84;
-            NR23_REG = 0xB7;
-            NR24_REG = 0x86;
-        }
-        else if(frameID == 104)
-        {
-            NR21_REG = 0x00;
-            NR22_REG = 0x84;
-            NR23_REG = 0x97;
-            NR24_REG = 0x86;
-        }
-        else if(frameID == 108)
-        {
-            NR21_REG = 0x00;
-            NR22_REG = 0x84;
-            NR23_REG = 0x97;
-            NR24_REG = 0x86;
-        }
-        else if(frameID == 112)
-        {
-            NR21_REG = 0x00;
-            NR22_REG = 0x84;
-            NR23_REG = 0x87;
-            NR24_REG = 0x86;
-        }
-        else if(frameID == 116)
-        {
-            NR21_REG = 0x00;
-            NR22_REG = 0x84;
-            NR23_REG = 0x87;
-            NR24_REG = 0x86;
-        }
-        else if(frameID == 120)
-        {
-            NR21_REG = 0x00;
-            NR22_REG = 0x84;
-            NR23_REG = 0x67;
-            NR24_REG = 0x86;
-        }
-        else if(frameID == 132)
+        MoveGameCharacter(&bird, bird.x, bird.y);
+
+        if(frameID == 4)
         {
             frameID = -1;
         }
@@ -281,11 +252,9 @@ void main()
 
         //scroll background and sprites
         scroll_bkg(1, 0);
-        set_sprite_tile(0, (int)frameID / 44);
 
         //set frame rate
-        
-        delay(120);
+        GBDelay(5);
     }
     
 }
