@@ -1,6 +1,6 @@
 /*
 
- BIRDIMG.H
+ ENEMIES.H
 
  Include File.
 
@@ -10,7 +10,7 @@
   Compression          : None.
   Counter              : None.
   Tile size            : 8 x 8
-  Tiles                : 0 to 35
+  Tiles                : 0 to 63
 
   Palette colors       : None.
   SGB Palette          : None.
@@ -24,8 +24,8 @@
 
 
 /* Bank of tiles. */
-#define BirdImgBank 0
+#define EnemiesBank 0
 /* Start of tile array. */
-extern unsigned char BirdImg[];
+extern unsigned char Enemies[];
 
-/* End of BIRDIMG.H */
+/* End of ENEMIES.H */

@@ -13,6 +13,9 @@
 UINT8 ParalaxBGOffset1, ParalaxBGOffset2, ParalaxBGOffset3;
 
 struct GameChar bird;
+struct GameChar tank;
+struct GameChar plane;
+
 UBYTE spritesize = 8;
 UINT8 spriteCount = 0;
 UINT8 frameID = 0;
@@ -37,7 +40,8 @@ void ParalaxScroll(){
 }
 
 //moves and animates characters
-void MoveGameCharacter(struct GameChar* character, UINT8 x, UINT8 y){
+void MoveGameCharacter(struct GameChar* character, UINT8 x, UINT8 y)
+{
     if (frameID == 0)
     {
         move_sprite(character->spriteID[4], x, y);
@@ -116,6 +120,39 @@ void MoveGameCharacter(struct GameChar* character, UINT8 x, UINT8 y){
     }
 }
 
+void MoveTank(struct GameChar* character, UINT8 x, UINT8 y)
+{
+    if (frameID == 0 || frameID == 2)
+    {
+        move_sprite(character->spriteID[4], x, y);
+        move_sprite(character->spriteID[6], x + spritesize, y);
+        move_sprite(character->spriteID[5], x, y + spritesize);
+        move_sprite(character->spriteID[7], x + spritesize, y + spritesize);
+        move_sprite(character->spriteID[0], 0, 0);
+        move_sprite(character->spriteID[1], 0, 0);
+        move_sprite(character->spriteID[2], 0, 0);
+        move_sprite(character->spriteID[3], 0, 0);
+    }
+    else if (frameID == 1 || frameID == 3)
+    {
+        move_sprite(character->spriteID[0], x, y);
+        move_sprite(character->spriteID[2], x + spritesize, y);
+        move_sprite(character->spriteID[1], x, y + spritesize);
+        move_sprite(character->spriteID[3], x + spritesize, y + spritesize);
+        move_sprite(character->spriteID[4], 0, 0);
+        move_sprite(character->spriteID[5], 0, 0);
+        move_sprite(character->spriteID[6], 0, 0);
+        move_sprite(character->spriteID[7], 0, 0);
+    }
+}
+void MovePlane(struct GameChar* character, UINT8 x, UINT8 y)
+{
+        move_sprite(character->spriteID[0], x, y);
+        move_sprite(character->spriteID[2], x + spritesize, y);
+        move_sprite(character->spriteID[1], x, y + spritesize);
+        move_sprite(character->spriteID[3], x + spritesize, y + spritesize);
+}
+
 //sets up bird with sprites, bounding box and position
 void SetUpBird(){
     bird.x = 80;
@@ -130,6 +167,36 @@ void SetUpBird(){
     }
 
     MoveGameCharacter(&bird, bird.x, bird.y);
+}
+
+void SetUpTank(){
+    tank.x = 140;
+    tank.y = 125;
+    tank.width = 16;
+    tank.height = 16;
+
+    for (spriteCount = 16; spriteCount < 24; spriteCount++)
+    {
+        set_sprite_tile(spriteCount, spriteCount);
+        tank.spriteID[spriteCount - 16] = spriteCount;
+    }
+
+    MoveGameCharacter(&tank, tank.x, tank.y);
+}
+
+void SetUpPlane(){
+    plane.x = 14;
+    plane.y = 80;
+    plane.width = 16;
+    plane.height = 16;
+
+    for (spriteCount = 24; spriteCount < 28; spriteCount++)
+    {
+        set_sprite_tile(spriteCount, spriteCount);
+        plane.spriteID[spriteCount - 24] = spriteCount;
+    }
+
+    MoveGameCharacter(&plane, plane.x, plane.y);
 }
 
 //adds delay
@@ -225,8 +292,10 @@ void main()
     set_interrupts(VBL_IFLAG | LCD_IFLAG);
 
     //set up sprite
-    set_sprite_data(0, 15, BirdImg);
+    set_sprite_data(0, 35, BirdImg);
     SetUpBird();
+    SetUpTank();
+    SetUpPlane();
 
     //fade back in once everything is loaded
     FadeIn();
@@ -240,11 +309,9 @@ void main()
     SHOW_BKG;
     //SHOW_WIN;
     DISPLAY_ON;
-
     NR52_REG = 0x80; //turns sound on
     NR50_REG = 0x77; //gives dou sound
     NR51_REG = 0xFF; //enables all sound channels
-
 
     //game loop
     while (1)
@@ -271,21 +338,20 @@ void main()
         default:
             break;
         }
-    
+        tank.x -= 2;
+        plane.x -= 5;
 
+        MoveTank(&tank, tank.x, tank.y);
+        MovePlane(&plane, plane.x, plane.y);
         MoveGameCharacter(&bird, bird.x, bird.y);
 
-        if(frameID == 4)
+        if(frameID == 3)
         {
             frameID = -1;
         }
-        
 
         //add a frame
         frameID++;
-
-        //scroll background and sprites
-        //scroll_bkg(1, 0);
 
         //set frame rate
         GBDelay(5);
