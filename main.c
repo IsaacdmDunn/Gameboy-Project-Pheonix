@@ -2,19 +2,28 @@
 #include <gb/gb.h>
 #include <gb/font.h>
 #include <stdio.h>
-#include "BirdImg.c"
-#include "bg1img.c"
-#include "bg1map.c"
+#include <stdlib.h>
+#include <rand.h> 
+#include "sprites/BirdImg.c"
+#include "backgrounds/bg1img.c"
+#include "backgrounds/bg1map.c"
 #include "windowmap.c"
-#include "menu.c"
-#include "menuimg.c"
+#include "backgrounds/menu.c"
+#include "backgrounds/menuimg.c"
 #include "GameChar.c"
+#include "GameItem.c"
 
 UINT8 ParalaxBGOffset1, ParalaxBGOffset2, ParalaxBGOffset3;
 
 struct GameChar bird;
 struct GameChar tank;
 struct GameChar plane;
+
+struct GameItems bullet;
+struct GameItems bomb;
+struct GameItems ball;
+struct GameItems toast;
+struct GameItems cereal;
 
 UBYTE spritesize = 8;
 UINT8 spriteCount = 0;
@@ -38,8 +47,6 @@ void ParalaxScroll(){
             break;            
     }
 }
-
-//moves and animates characters
 void MoveGameCharacter(struct GameChar* character, UINT8 x, UINT8 y)
 {
     if (frameID == 0)
@@ -119,7 +126,6 @@ void MoveGameCharacter(struct GameChar* character, UINT8 x, UINT8 y)
         move_sprite(character->spriteID[15], 0,0);
     }
 }
-
 void MoveTank(struct GameChar* character, UINT8 x, UINT8 y)
 {
     if (frameID == 0 || frameID == 2)
@@ -152,6 +158,10 @@ void MovePlane(struct GameChar* character, UINT8 x, UINT8 y)
         move_sprite(character->spriteID[1], x, y + spritesize);
         move_sprite(character->spriteID[3], x + spritesize, y + spritesize);
 }
+void MoveItem(struct GameItems* item, UINT8 x, UINT8 y) 
+{
+    move_sprite(item->spriteID, x, y);
+}
 
 //sets up bird with sprites, bounding box and position
 void SetUpBird(){
@@ -168,7 +178,6 @@ void SetUpBird(){
 
     MoveGameCharacter(&bird, bird.x, bird.y);
 }
-
 void SetUpTank(){
     tank.x = 140;
     tank.y = 125;
@@ -183,7 +192,6 @@ void SetUpTank(){
 
     MoveGameCharacter(&tank, tank.x, tank.y);
 }
-
 void SetUpPlane(){
     plane.x = 14;
     plane.y = 80;
@@ -198,7 +206,25 @@ void SetUpPlane(){
 
     MoveGameCharacter(&plane, plane.x, plane.y);
 }
+void SetupFood() 
+{
+    toast.x = 80;
+    toast.y = 30;
+    toast.width = 8;
+    toast.height = 8;
+    set_sprite_tile(34, 34);
+    toast.spriteID = 34;
 
+    cereal.x = 40;
+    cereal.y = 40;
+    cereal.width = 8;
+    cereal.height = 8;
+    set_sprite_tile(35, 35);
+    cereal.spriteID = 35;
+
+    MoveItem(&cereal, cereal.x, cereal.y);
+    MoveItem(&toast, toast.x, toast.y);
+}
 //adds delay
 void GBDelay(UINT8 delayCount)
 {
@@ -234,7 +260,6 @@ void FadeOut()
 		GBDelay(5);
 	}
 }
-
 //changes screen colour to fade in
 void FadeIn()
 {
@@ -255,6 +280,40 @@ void FadeIn()
 		}
 		GBDelay(5);
 	}
+}
+
+void CheckEnemyCollisions(struct GameChar* character1, struct GameChar* character2)
+{
+    if (character1->x < character2->x + character2->width && 
+        character1->x + character1->width > character2->x &&
+        character1->y < character2->y + character2->height && 
+        character1->y + character1->height > character2->y)
+    {
+        character1->x = 40;
+        character1->y = 40;
+    }
+}
+void CheckItemCollisions(struct GameChar* character1, struct GameItems* item)
+{
+   if (character1->x < item->x + item->width && 
+        character1->x + character1->width > item->x &&
+        character1->y < item->y + item->height && 
+        character1->y + character1->height > item->y)
+    {
+        item->x = rand() % 80 + 20;
+        item->y = rand() % 80 + 20;
+    } 
+}
+void CheckBulletCollisions(struct GameChar* character1, struct GameItems* item)
+{
+    if (character1->x < item->x + item->width && 
+        character1->x + character1->width > item->x &&
+        character1->y < item->y + item->height && 
+        character1->y + character1->height > item->y)
+    {
+        character1->x = 0;
+        character1->y = 0;
+    } 
 }
 
 //start up function
@@ -292,10 +351,11 @@ void main()
     set_interrupts(VBL_IFLAG | LCD_IFLAG);
 
     //set up sprite
-    set_sprite_data(0, 35, BirdImg);
+    set_sprite_data(0, 36, BirdImg);
     SetUpBird();
     SetUpTank();
     SetUpPlane();
+    SetupFood();
 
     //fade back in once everything is loaded
     FadeIn();
@@ -344,6 +404,18 @@ void main()
         MoveTank(&tank, tank.x, tank.y);
         MovePlane(&plane, plane.x, plane.y);
         MoveGameCharacter(&bird, bird.x, bird.y);
+        MoveItem(&toast, toast.x, toast.y);
+        MoveItem(&cereal, cereal.x, cereal.y);
+
+        CheckEnemyCollisions(&bird, &tank);
+        CheckEnemyCollisions(&bird, &plane);
+
+        CheckItemCollisions(&bird, &toast);
+        CheckItemCollisions(&bird, &cereal);
+        
+        CheckBulletCollisions(&bird, &bullet);
+        CheckBulletCollisions(&bird, &bomb);
+        CheckBulletCollisions(&bird, &ball);
 
         if(frameID == 3)
         {
