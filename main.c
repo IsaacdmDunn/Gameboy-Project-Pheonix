@@ -300,8 +300,8 @@ void CheckItemCollisions(struct GameChar* character1, struct GameItems* item)
         character1->y < item->y + item->height && 
         character1->y + character1->height > item->y)
     {
-        item->x = rand() % 80 + 20;
-        item->y = rand() % 80 + 20;
+        item->x = rand() % 160 + item->width;
+        item->y = rand() % 144 + item->height;
     } 
 }
 void CheckBulletCollisions(struct GameChar* character1, struct GameItems* item)
@@ -314,6 +314,51 @@ void CheckBulletCollisions(struct GameChar* character1, struct GameItems* item)
         character1->x = 0;
         character1->y = 0;
     } 
+}
+
+void CheckPlayerBoundingBox(struct GameChar* player)
+{
+    if (player->x < 0 + player->width)
+    {
+        player->x+=2;
+    }
+    else if (player->x > 160)
+    {
+        player->x-=2;
+    }
+    else if (player->y < 0 + player->height)
+    {
+        player->y+=2;
+    }
+    else if (player->y > 144)
+    {
+        player->y-=2;
+    }
+    
+}
+
+void CheckItemBoundingBox(struct GameItems* item) 
+{
+    if (item->x < 0 + item->height)
+    {
+        item->x = rand() % 160 + item->width;
+        item->y = rand() % 144 + item->height;
+    }
+    else if (item->x > 160)
+    {
+        item->x = rand() % 160 + item->width;
+        item->y = rand() % 144 + item->height;
+    }
+    else if (item->y < 0 + item->height)
+    {
+        item->x = rand() % 160 + item->width;
+        item->y = rand() % 144 + item->height;
+    }
+    else if (item->y > 144)
+    {
+        item->x = rand() % 160 + item->width;
+        item->y = rand() % 144 + item->height;
+    }
 }
 
 //start up function
@@ -406,6 +451,10 @@ void main()
         MoveGameCharacter(&bird, bird.x, bird.y);
         MoveItem(&toast, toast.x, toast.y);
         MoveItem(&cereal, cereal.x, cereal.y);
+
+        CheckPlayerBoundingBox(&bird);
+        CheckItemBoundingBox(&toast);
+        CheckItemBoundingBox(&cereal);
 
         CheckEnemyCollisions(&bird, &tank);
         CheckEnemyCollisions(&bird, &plane);
