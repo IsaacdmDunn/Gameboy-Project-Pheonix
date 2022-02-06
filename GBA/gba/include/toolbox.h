@@ -8,7 +8,9 @@
 
 #ifndef TOOLBOX_H
 #define TOOLBOX_H
-
+#include <stdint.h>
+//#include <stdlib.h>
+#include <stdbool.h>
 // === (from tonc_types.h) ============================================
 
 typedef unsigned char   u8;
@@ -49,31 +51,39 @@ typedef u16 COLOR;
 #define SCREEN_H  160
 
 #define vid_mem     ((u16*)MEM_VRAM)
-
-INLINE void m3_plot(u32 x, u32 y, COLOR clr)
+u32 RSEED = 42;
+u32 seed(u32 seed)
 {
-    vid_mem[y * SCREEN_W + x] = clr;
+	u32 oldSeed = RSEED;
+	RSEED = seed;
+	return oldSeed;
 }
 
-#define CLR_BLACK   0x0000
-#define CLR_RED     0x001F
-#define CLR_LIME    0x03E0
-#define CLR_YELLOW  0x03FF
-#define CLR_BLUE    0x7C00
-#define CLR_MAG     0x7C1F
-#define CLR_CYAN    0x7FE0
-#define CLR_WHITE   0x7FFF
-
-
-u16 SetColour(u8 r, u8 g, u8 b)
+u32 rand()
 {
-    return (r&0x1F) | (g&0x1F)<<5 | (b&0x1F)<<10;
+	RSEED = 1664525 * RSEED + 1013904223;
+	return (RSEED >> 16) & 0x7FFF;
 }
 
-void PlotP(u32 x,u32 y,u16 clr)
+u32 randRange(u32 min, u32 max) 
 {
-	vid_mem[y*SCREEN_W+x]=clr;
+	return (rand() * (max-min)>>15)+min;
 }
+
+
+#define REG_VCOUNT *(volatile unsigned short*)0x04000006
+void vsync()
+{
+	while(REG_VCOUNT >= SCREEN_H);
+	while(REG_VCOUNT < SCREEN_H);
+}
+
+u32 abs(u32 val) 
+{
+	u32 mask = val >> 31;
+	return(val ^ mask) - mask;
+}
+
 
 #endif // TOOLBOX_H
 
