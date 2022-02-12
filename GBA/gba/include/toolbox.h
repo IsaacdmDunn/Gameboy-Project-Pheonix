@@ -16,7 +16,7 @@
 typedef unsigned char   u8;
 typedef unsigned short  u16;
 typedef unsigned int    u32;
-
+u16 __key_curr=0, __key_prev=0;
 typedef u16 COLOR;
 
 #define INLINE static inline

@@ -1,1 +1,1 @@
-<Project name="Tutorial"><Folder name="include"><File path="include\toolbox.h"></File><File path="include\gfx.h"></File></Folder><Folder name="source"><File path="source\main.cpp"></File></Folder><File path="Makefile"></File></Project>
+<Project name="Tutorial"><Folder name="include"><File path="include\toolbox.h"></File><File path="include\gfx.h"></File><File path="include\input.h"></File></Folder><Folder name="source"><File path="source\main.cpp"></File></Folder><File path="Makefile"></File></Project>
