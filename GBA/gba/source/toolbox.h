@@ -1,9 +1,9 @@
 //
 // toolbox.h: 
 // 
-// Tools header for cbb_demo
+// Tools header for norf_demo
 // 
-// (20060211-20060924, cearn)
+// (20060211-20060922, cearn)
 //
 // === NOTES ===
 // * This is a _small_ set of typedefs, #defines and inlines that can 
@@ -65,8 +65,6 @@ typedef TILE8		CHARBLOCK8[256];
 #define PAL_SIZE	0x00400
 #define VRAM_SIZE	0x18000
 
-#define PAL_BG_SIZE		0x00200
-#define PAL_OBJ_SIZE	0x00200
 #define M3_SIZE			0x12C00
 #define M4_SIZE			0x09600
 #define M5_SIZE			0x0A000
@@ -74,13 +72,11 @@ typedef TILE8		CHARBLOCK8[256];
 #define SBB_SIZE		0x00800
 #define VRAM_BG_SIZE	0x10000
 
-#define MEM_PAL_OBJ		(MEM_PAL + PAL_BG_SIZE)
 
 // --- memmap ---
 
 // pal_bg_mem[y] = COLOR (color y)
 #define pal_bg_mem		((COLOR*)MEM_PAL)
-#define pal_obj_mem		((COLOR*)MEM_PAL_OBJ)
 
 // --- VRAM ---
 // tile_mem[y] = TILE[]   (char block y)
@@ -115,6 +111,8 @@ typedef TILE8		CHARBLOCK8[256];
 #define REG_BG2VOFS			*(vu16*)(REG_BASE+0x001A)
 #define REG_BG3HOFS			*(vu16*)(REG_BASE+0x001C)
 #define REG_BG3VOFS			*(vu16*)(REG_BASE+0x001E)
+
+#define REG_KEYINPUT		*(vu16*)(REG_BASE+0x0130)	// Key status
 
 
 // === (tonc_memdef.h) =======================================----
@@ -186,6 +184,28 @@ typedef TILE8		CHARBLOCK8[256];
 	| ((prio)&3)											\
 )
 
+// --- REG_KEYINPUT ---
+
+#define KEY_A			0x0001	//!< Button A
+#define KEY_B			0x0002	//!< Button B
+#define KEY_SELECT		0x0004	//!< Select button
+#define KEY_START		0x0008	//!< Start button
+#define KEY_RIGHT		0x0010	//!< Right D-pad
+#define KEY_LEFT		0x0020	//!< Left D-pad
+#define KEY_UP			0x0040	//!< Up D-pad
+#define KEY_DOWN		0x0080	//!< Down D-pad
+#define KEY_R			0x0100	//!< Shoulder R
+#define KEY_L			0x0200	//!< Shoulder L
+
+#define KEY_ANY			0x03FF	//!< any key
+#define KEY_DIR			0x00F0	//!< any-dpad
+#define KEY_ACCEPT		0x0009	//!< A or start
+#define KEY_CANCEL		0x0002	//!< B (well, it usually is)
+#define KEY_SHOULDER	0x0300	//!< L or R
+
+#define KEY_RESET		0x000F	//!< St+Se+A+B
+
+#define KEY_MASK		0x03FF
 
 // --- Reg screen entries ----------------------------------------------
 
@@ -207,6 +227,76 @@ typedef TILE8		CHARBLOCK8[256];
 
 #define SE_BUILD(id, pbank, hflip, vflip)	\
 ( ((id)&0x03FF) | (((hflip)&1)<<10) | (((vflip)&1)<<11) | ((pbank)<<12) )
+
+
+// === (tonc_core.h) =============================================
+
+// tribool: 1 if {plus} on, -1 if {minus} on, 0 if {plus}=={minus}
+INLINE int bit_tribool(u32 x, int plus, int minus);
+
+
+extern u16 __key_curr, __key_prev;
+
+
+// === (tonc_video.h) ============================================
+
+// --- sizes ---
+#define SCREEN_WIDTH	240
+#define SCREEN_HEIGHT	160
+
+#define M3_WIDTH	SCREEN_WIDTH
+#define M3_HEIGHT	SCREEN_HEIGHT
+#define M4_WIDTH	SCREEN_WIDTH
+#define M4_HEIGHT	SCREEN_HEIGHT
+#define M5_WIDTH	160
+#define M5_HEIGHT	128
+
+// --- colors ---
+
+#define CLR_BLACK	0x0000
+#define CLR_RED		0x001F
+#define CLR_LIME	0x03E0
+#define CLR_YELLOW	0x03FF
+#define CLR_BLUE	0x7C00
+#define CLR_MAG		0x7C1F
+#define CLR_CYAN	0x7FE0
+#define CLR_WHITE	0x7FFF
+
+INLINE COLOR RGB15(u32 red, u32 green, u32 blue);
+
+INLINE void vid_vsync();
+
+
+// === INLINES ========================================================
+
+// --- (tonc_core.h) --------------------------------------------------
+
+//! Gives a tribool (-1, 0, or +1) depending on the state of some bits.
+/*! Looks at the \a plus and \a minus bits of \a flags, and subtracts 
+*	  their status to give a +1, -1 or 0 result. Useful for direction flags.
+*	\param plus		Bit number for positive result
+*	\param minus	Bit number for negative result
+*	\return	<b>+1</b> if \a plus bit is set but \a minus bit isn't<br>
+*	  <b>-1</b> if \a minus bit is set and \a plus bit isn't</br>
+*	  <b>0</b> if neither or both are set.
+*/
+INLINE int bit_tribool(u32 flags, int plus, int minus)
+{	return ((flags>>plus)&1) - ((flags>>minus)&1);	}
+
+
+// --- (tonc_video.h) -------------------------------------------------
+
+//! Wait for next VBlank
+INLINE void vid_vsync()
+{
+	while(REG_VCOUNT >= 160);   // wait till VDraw
+	while(REG_VCOUNT < 160);    // wait till VBlank
+}
+
+//! Create a 15bit BGR color.
+INLINE COLOR RGB15(u32 red, u32 green, u32 blue)
+{	return red | (green<<5) | (blue<<10);	}
+
 
 
 #endif // TOOLBOX_H

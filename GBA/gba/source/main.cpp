@@ -1,73 +1,86 @@
+//
+// obj_demo.c
+// testing various sprite related things
+//
+// (20031003 - 20060924, Cearn)
+
+#include <string.h>
 #include "toolbox.h"
+#include "metr.h"
 
-#include "cbb_ids.h"
+OBJ_ATTR obj_buffer[128];
+OBJ_AFFINE *obj_aff_buffer= (OBJ_AFFINE*)obj_buffer;
 
-#define CBB_4 0
-#define SBB_4 2
-
-#define CBB_8 2
-#define SBB_8 4
-
-void load_tiles()
+// testing a few sprite things
+// D-pad: move 
+// SELECT: switch palette
+// START: toggle mapping mode
+// A: horizontal flip
+// B: vertical flip
+// L & R shift starting tile
+void obj_test()
 {
-	int ii;
-	TILE *tl= (TILE*)cbb_idsTiles;
-	TILE8 *tl8= (TILE8*)cbb_ids8Tiles;
+	int x= 96, y= 32;
+	u32 tid= 0, pb= 0;		// tile id, pal-bank
 
-	// Loading tiles. don't get freaked out on how it looks
-	// 4-bit tiles to blocks 0 and 1
-	tile_mem[0][1]= tl[1];		tile_mem[0][2]= tl[2];
-	tile_mem[1][0]= tl[3];		tile_mem[1][1]= tl[4];
-	// and the 8-bit tiles to blocks 2 though 5
-	tile8_mem[2][1]= tl8[1];	tile8_mem[2][2]= tl8[2];
-	tile8_mem[3][0]= tl8[3];	tile8_mem[3][1]= tl8[4];
-	tile8_mem[4][0]= tl8[5];	tile8_mem[4][1]= tl8[6];
-	tile8_mem[5][0]= tl8[7];	tile8_mem[5][1]= tl8[8];
+	OBJ_ATTR *metr= &obj_buffer[0];
+	obj_set_attr(metr, 
+		ATTR0_SQUARE,				// Square, regular sprite
+		ATTR1_SIZE_64,					// 64x64p, 
+		ATTR2_PALBANK(pb) | tid);		// palbank 0, tile 0
 
-	// And let's not forget the palette (yes, obj pal too)
-	u16 *src= (u16*)cbb_idsPal;
-	for(ii=0; ii<16; ii++)
-		pal_bg_mem[ii]= pal_obj_mem[ii]= *src++;
-}
+	// position sprite (redundant here; the _real_ position
+	// is set further down
+	obj_set_pos(metr, x, y);
 
-void init_maps()
-{
-	// se4 and se8 map coords: (0,2) and (0,8)
-	SCR_ENTRY *se4= &se_mem[SBB_4][2*32], *se8= &se_mem[SBB_8][8*32];
-	// show first tiles of char-blocks available to bg0
-	// tiles 1, 2 of char-block CBB_4
-	se4[0x01]= 0x0001;		se4[0x02]= 0x0002;
+	while(1)
+	{
+		vid_vsync();
+		key_poll();
 
-	// tiles 0, 1 of char-block CBB_4+1
-	se4[0x20]= 0x0200;		se4[0x21]= 0x0201;
+		// move left/right
+		x += 2*key_tri_horz();
 
-	// show first tiles of char-blocks available to bg1
-	// tiles 1, 2 of char-block CBB_8 (== 2)
-	se8[0x01000]= 0x0001;		se8[0x02]= 0x0002;
+		// move up/down
+		y += 2*key_tri_vert();
 
-	// tiles 1, 2 of char-block CBB_8+1
-	se8[0x20]= 0x0100;		se8[0x21]= 0x0101;
+		// increment/decrement starting tile with R/L
+		tid += bit_tribool(key_hit(-1), KI_R, KI_L);
 
-	// tiles 1, 2 of char-block CBB_8+2 (== CBB_OBJ_LO)
-	se8[0x40]= 0x0200;		se8[0x41]= 0x0201;
+		// flip
+		if(key_hit(KEY_A))	// horizontally
+			metr->attr1 ^= ATTR1_HFLIP;
+		if(key_hit(KEY_B))	// vertically
+			metr->attr1 ^= ATTR1_VFLIP;
+		
+		// make it glow (via palette swapping)
+		pb= key_is_down(KEY_SELECT) ? 1 : 0;
 
-	// tiles 1, 2 of char-block CBB_8+3 (== CBB_OBJ_HI)
-	se8[0x60]= 0x0300;		se8[0x61]= 0x0301;
+		// toggle mapping mode
+		if(key_hit(KEY_START))
+			REG_DISPCNT ^= DCNT_OBJ_1D;
+
+		// Hey look, it's one of them build macros!
+		metr->attr2= ATTR2_BUILD(tid, pb, 0);
+		obj_set_pos(metr, x, y);
+
+		oam_copy(oam_mem, obj_buffer, 1);	// only need to update one
+	}
 }
 
 int main()
 {
-	load_tiles();
-	init_maps();
+	// Places the glyphs of a 4bpp boxed metroid sprite 
+	//   into LOW obj memory (cbb == 4)
+	memcpy(&tile_mem[4][0], metrTiles, metrTilesLen);
+	memcpy(pal_obj_mem, metrPal, metrPalLen);
 
-	// init backgrounds
-	REG_BG0CNT= BG_CBB(CBB_4) | BG_SBB(SBB_4) | BG_4BPP;
-	REG_BG1CNT= BG_CBB(CBB_8) | BG_SBB(SBB_8) | BG_8BPP;
-	// enable backgrounds
-	REG_DISPCNT= DCNT_MODE0 | DCNT_BG0 | DCNT_BG1 | DCNT_OBJ;
+	oam_init(obj_buffer, 128);
+	REG_DISPCNT= DCNT_OBJ | DCNT_OBJ_1D;
+
+	obj_test();
 
 	while(1);
 
 	return 0;
 }
-
